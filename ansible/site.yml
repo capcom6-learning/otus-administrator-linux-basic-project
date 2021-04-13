@@ -8,35 +8,35 @@
   - common
 
 # Configure and deploy database servers.
-- hosts: dbservers
+# - hosts: dbservers
 
-  roles:
-  - base-db
+#   roles:
+#   - base-db
 
-  tags:
-  - db
+#   tags:
+#   - db
 
 # Configure and deploy slave database servers.
-- hosts: dbslaves
+# - hosts: dbslaves
 
-  roles:
-  - base-db
-  - slave-db
+#   roles:
+#   - base-db
+#   - slave-db
 
-  tags:
-  - db
+#   tags:
+#   - db
 
 # Configure and deploy the web servers. Note that we include two roles here,
 # the 'base-apache' role which simply sets up Apache, and 'web' which includes
 # our example web application.
-- hosts: webservers
+# - hosts: webservers
 
-  roles:
-  - base-apache
-  - web
+#   roles:
+#   - base-apache
+#   - web
 
-  tags:
-  - web
+#   tags:
+#   - web
 
 # Configure and deploy the load balancer(s).
 - hosts: lbservers
@@ -48,10 +48,10 @@
   - lb
 
 # Configure and deploy the Prometheus monitoring node(s).
-- hosts: monitoring
+# - hosts: monitoring
 
-  roles:
-  - prometheus
+#   roles:
+#   - prometheus
 
-  tags:
-  - monitoring
+#   tags:
+#   - monitoring

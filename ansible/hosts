@@ -1,15 +1,18 @@
 [webservers]
-backend1
-backend1
+#backend1
+139.177.179.76
+#backend2
+192.46.237.252
 
-[dbservers]
-mysql_master
+#[dbservers]
+#mysql_master
 
-[dbslaves]
-mysql_slave
+#[dbslaves]
+#mysql_slave
 
 [lbservers]
-frontend
+#frontend
+139.177.180.121
 
-[monitoring]
-monitoring
+#[monitoring]
+#monitoring
