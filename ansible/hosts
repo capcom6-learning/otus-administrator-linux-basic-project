@@ -1,0 +1,15 @@
+[webservers]
+backend1
+backend1
+
+[dbservers]
+mysql_master
+
+[dbslaves]
+mysql_slave
+
+[lbservers]
+frontend
+
+[monitoring]
+monitoring
