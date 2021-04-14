@@ -1,0 +1,7 @@
+---
+# Handlers for Httpd
+
+- name: reload httpd
+  service: 
+    name: httpd
+    state: reloaded

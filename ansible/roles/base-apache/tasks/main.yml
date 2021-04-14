@@ -1,15 +1,14 @@
 ---
 # This role installs httpd
 
-- name: Install http
+- name: Install httpd
   yum:
-    name: "{{ item }}"
+    name:
+    - httpd
+    - php
+    - php-mysql
+    - git
     state: present
-  with_items:
-   - httpd
-   - php
-   - php-mysql
-   - git
 
 - name: Configure SELinux to allow httpd to connect to remote database
   seboolean:
@@ -18,8 +17,20 @@
     persistent: yes
   when: sestatus.rc != 0
 
+- name: Configure the httpd conf
+  template: 
+   src: httpd.conf.j2
+   dest: /etc/httpd/conf/httpd.conf
+  notify: reload httpd
+
+# - name: Remove welcome page conf
+#   ansible.builtin.file:
+#     path: /etc/httpd/conf.d/welcome.conf
+#     state: absent
+
 - name: http service state
   service:
     name: httpd
     state: started
     enabled: yes
+

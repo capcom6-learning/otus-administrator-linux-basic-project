@@ -14,6 +14,7 @@
 
 - name: allow local network
   ansible.posix.firewalld:
+    zone: trusted
     source: '{{ network }}'
     permanent: yes
     state: enabled
