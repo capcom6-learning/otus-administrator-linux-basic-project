@@ -4,11 +4,13 @@
 #backend2
 192.46.237.252
 
-#[dbservers]
+[dbservers]
 #mysql_master
+139.177.180.9
 
-#[dbslaves]
+[dbslaves]
 #mysql_slave
+172.104.150.90
 
 [lbservers]
 #frontend

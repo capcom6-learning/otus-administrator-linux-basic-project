@@ -1,26 +1,54 @@
 ---
 # This role will install MySQL and create db user and give permissions.
 
+# - name: Install MariaDB Repo
+#   ansible.builtin.shell: curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="{{ mariadb_version }}"
+
+- name: Import a key from a url
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://downloads.mariadb.com/MariaDB/MariaDB-Server-GPG-KEY
+
+- name: Install MariaDB Repo
+  template:
+    src: mariadb.repo.j2
+    dest: /etc/yum.repos.d/mariadb.repo
+
 - name: Install Mysql package
-  yum: name={{ item }} state=present
-  with_items:
-   - mysql-server
-   - MySQL-python
+  yum:
+    name:
+      - MariaDB-server 
+      # - MariaDB-client 
+      - MariaDB-backup
+      - MySQL-python
+    state: present
 
 - name: Configure SELinux to start mysql on any port
-  seboolean: name=mysql_connect_any state=true persistent=yes
+  seboolean: 
+    name: mysql_connect_any 
+    state: true 
+    persistent: yes
   when: sestatus.rc != 0
 
-- name: Create Mysql configuration file
-  template: src=my.cnf.j2 dest=/etc/my.cnf
-  notify:
-  - restart mysql
+# - name: Create Mysql configuration file
+#   template: src=my.cnf.j2 dest=/etc/my.cnf
+#   notify:
+#   - restart mariadb
 
 - name: Start Mysql Service
-  service: name=mysqld state=started enabled=yes
+  service: 
+    name: mariadb 
+    state: started 
+    enabled: yes
 
-- name: Create Application Database
-  mysql_db: name={{ dbname }} state=present
+# - name: Create Application Database
+#   mysql_db: name={{ dbname }} state=present
 
-- name: Create Application DB User
-  mysql_user: name={{ dbuser }} password={{ upassword }} priv=*.*:ALL host='%' state=present
+- name: Create Slave DB User
+  mysql_user:
+    name: '{{ slave_user }}'
+    password: '{{ slave_password }}'
+    priv: '*.*:REPLICATION SLAVE'
+    host: '%' 
+    state: present
+  when: "'dbservers' in group_names"

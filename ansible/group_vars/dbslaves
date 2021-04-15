@@ -1,8 +1,5 @@
 ---
-# The variables file used by the playbooks in the dbservers group.
+# The variables file used by the playbooks in the dbslaves group.
 # These don't have to be explicitly imported by vars_files: they are autopopulated.
 
 mariadb_version: mariadb-10.4
-
-slave_user: slave
-slave_password: SlavePassword!
