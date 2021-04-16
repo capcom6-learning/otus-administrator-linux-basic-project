@@ -30,24 +30,59 @@
     persistent: yes
   when: sestatus.rc != 0
 
-# - name: Create Mysql configuration file
-#   template: src=my.cnf.j2 dest=/etc/my.cnf
-#   notify:
-#   - restart mariadb
+- name: Create Mysql configuration file
+  template: 
+    src: my.cnf.j2
+    dest: /etc/my.cnf.d/server.cnf
+  notify:
+  - restart mariadb
 
 - name: Start Mysql Service
   service: 
-    name: mariadb 
+    name: mariadb
     state: started 
     enabled: yes
 
-# - name: Create Application Database
-#   mysql_db: name={{ dbname }} state=present
+# - name: Check is root password configured
+#   stat:
+#     path: /root/.my.cnf
+#   register: mysql_root_configured
+
+# mysql_secure_installation
+- name: root password is present
+  mysql_user:
+    name: 'root'
+    host_all: true
+    password: '{{ mysql_root_password | mandatory }}'
+    state: present
+  # when: not mysql_root_configured
+
+- name: Create Mysql configuration file
+  template: 
+    src: my_root.cnf.j2
+    dest: /root/.my.cnf
+    mode: '0600'
+
+- name: test database is absent
+  mysql_db:
+    name: test
+    state: absent
+
+- name: anonymous users are absent
+  mysql_user:
+    name: ''
+    state: absent
+    host_all: true
+
+- name: remove remote root
+  community.mysql.mysql_query:
+    query:
+      - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
 
 - name: Create Slave DB User
   mysql_user:
-    name: '{{ slave_user }}'
-    password: '{{ slave_password }}'
+    name: '{{ mysql_slave_user }}'
+    password: '{{ mysql_slave_password }}'
     priv: '*.*:REPLICATION SLAVE'
     host: '%' 
     state: present
