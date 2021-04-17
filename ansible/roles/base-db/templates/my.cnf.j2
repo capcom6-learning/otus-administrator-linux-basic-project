@@ -13,9 +13,20 @@
 
 # this is only for the mysqld standalone daemon
 [mysqld]
+# set server_id
 server-id		        = {{ server_id }}
 # report_host		    = {{ ansible_hostname }}
+# optimize memory usage
+{% if 'dbservers' in group_names %}
 innodb_buffer_pool_size	= {{ (ansible_memtotal_mb * 0.8) | int }}M
+{% else %}
+innodb_buffer_pool_size	= {{ (ansible_memtotal_mb * 0.5) | int }}M
+{% endif %}
+
+log_bin                 = mysql-bin
+binlog_format           = mixed
+expire_logs_days        = 10
+log_bin_compress        = ON
 
 #
 # * Galera-related settings
