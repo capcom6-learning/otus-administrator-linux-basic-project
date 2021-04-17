@@ -21,11 +21,12 @@ server-id		        = {{ server_id }}
 innodb_buffer_pool_size	= {{ (ansible_memtotal_mb * 0.8) | int }}M
 {% else %}
 innodb_buffer_pool_size	= {{ (ansible_memtotal_mb * 0.5) | int }}M
+read_only               = 1
 {% endif %}
 
 log_bin                 = mysql-bin
 binlog_format           = mixed
-expire_logs_days        = 10
+expire_logs_days        = {{ mysql_binlog_expire }}
 log_bin_compress        = ON
 
 #

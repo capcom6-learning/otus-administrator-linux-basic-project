@@ -12,6 +12,7 @@
 
   roles:
   - base-db
+  # - master-db
 
   tags:
   - db
@@ -21,7 +22,10 @@
 
   roles:
   - base-db
-#   - slave-db
+  - slave-db
+
+  vars_files:
+  - group_vars/dbservers
 
   tags:
   - db

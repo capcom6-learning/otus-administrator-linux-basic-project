@@ -87,3 +87,10 @@
     host: '%' 
     state: present
   when: "'dbservers' in group_names"
+
+- name: Create database user with name 'backup'
+  community.mysql.mysql_user:
+    name: backup
+    password: '{{ mysql_backup_password }}'
+    priv: '*.*:SELECT,SHOW VIEW,LOCK TABLES,RELOAD,REPLICATION CLIENT,PROCESS'
+    state: present

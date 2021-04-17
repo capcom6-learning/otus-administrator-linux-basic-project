@@ -1,0 +1,22 @@
+- name: Find actual backups in /var/backups/mysql
+  find:
+    paths: 
+      - /var/backups/mysql/
+    age: '-{{ mysql_binlog_expire }}d'
+    file_type: directory
+    recurse: no
+  register: backups
+
+- name: Make new backup
+  ansible.builtin.shell: systemd-cat --identifier=backup-mysql /usr/local/bin/backup-mysql.sh
+  become: yes
+  become_user: backup
+  when: backups.matched == 0
+  register: backup_state
+
+- name: display multiple file contents
+  debug: 
+    var: '{{ item }}'
+  with_file:
+    - /var/backups/mysql/{{ '%Y-%m-%d' | strftime }}/backup-progress.lo
+  when: backup_state is defined and backup_state.rc != 0
