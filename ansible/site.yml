@@ -12,7 +12,7 @@
 
   roles:
   - base-db
-  # - master-db
+  - master-db
 
   tags:
   - db
@@ -38,6 +38,9 @@
   roles:
   - base-apache
   - web
+
+  vars_files:
+  - group_vars/dbservers
 
   tags:
   - web

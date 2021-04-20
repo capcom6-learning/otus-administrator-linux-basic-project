@@ -90,7 +90,7 @@
 
 - name: Create database user with name 'backup'
   community.mysql.mysql_user:
-    name: backup
+    name: '{{ mysql_backup_user }}'
     password: '{{ mysql_backup_password }}'
     priv: '*.*:SELECT,SHOW VIEW,LOCK TABLES,RELOAD,REPLICATION CLIENT,PROCESS'
     state: present

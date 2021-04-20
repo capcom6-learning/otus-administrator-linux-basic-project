@@ -2,7 +2,7 @@
 # Variables for the web server configuration
 
 # this is the repository that holds our sample webapp
-repository: https://github.com/capcom6/WebMPC.git
+repository: https://github.com/bcit-ci/CodeIgniter.git
 
 # this is the version of sample app
-webapp_version: HEAD
+webapp_version: 3.1.11

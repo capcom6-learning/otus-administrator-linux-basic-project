@@ -1,19 +1,21 @@
-- name: Download backup scripts
-  get_url:
-    url: "{{ item }}"
-    dest: /usr/local/bin/
-    mode: '0755'
-  loop:
-    - https://raw.githubusercontent.com/capcom6/mariabackup/master/backup-mysql.sh
-    - https://raw.githubusercontent.com/capcom6/mariabackup/master/prepare-mysql.sh
-    - https://raw.githubusercontent.com/capcom6/mariabackup/master/extract-mysql.sh
+---
+
+# - name: Download backup scripts
+#   get_url:
+#     url: "{{ item }}"
+#     dest: /usr/local/bin/
+#     mode: '0755'
+#   loop:
+#     - https://raw.githubusercontent.com/capcom6/mariabackup/master/backup-mysql.sh
+#     - https://raw.githubusercontent.com/capcom6/mariabackup/master/prepare-mysql.sh
+#     - https://raw.githubusercontent.com/capcom6/mariabackup/master/extract-mysql.sh
 
 - name: Add the user 'backup'
   ansible.builtin.user:
     name: backup
     groups: mysql
     comment: Backup user
-    home: /var/backups/
+    home: '{{ backup_user_home }}'
 
 # - name: Update permissions for data dir
 #   ansible.builtin.shell: "{{item}}"
@@ -23,23 +25,31 @@
 
 - name: Create a directory for backups
   ansible.builtin.file:
-    path: /var/backups/mysql
+    path: '{{ backup_user_home }}'
     state: directory
     mode: '0755'
     owner: backup
     group: mysql
 
-- name: Create a directory for backup configs
+- name: Create a directory for backups
   ansible.builtin.file:
-    path: /etc/mysql
+    path: '{{ mysql_backup_location }}'
     state: directory
+    mode: '0755'
     owner: backup
-    group: backup
+    group: mysql
+
+# - name: Create a directory for backup configs
+#   ansible.builtin.file:
+#     path: /etc/mysql
+#     state: directory
+#     owner: backup
+#     group: backup
 
 - name: Create Mysql backup configuration file
   template: 
     src: my_backup.cnf.j2
-    dest: /etc/mysql/backup.cnf
+    dest: '{{ backup_user_home }}/.my.cnf'
     mode: '0660'
     owner: backup
     group: backup
@@ -84,7 +94,7 @@
   when: replica_state.Is_Slave == false
 
 - name: Upload backup to {{ inventory_hostname }}
-  ansible.builtin.shell: "rsync -r {{local_path.path}}/{{backup_path.path | basename}}/* root@{{inventory_hostname}}:/var/backups/mysql/tmp/"
+  ansible.builtin.shell: "rsync -r {{local_path.path}}/{{backup_path.path | basename}}/* root@{{inventory_hostname}}:{{ mysql_backup_location }}/tmp/"
   delegate_to: 127.0.0.1
   when: replica_state.Is_Slave == false
 
@@ -96,7 +106,7 @@
 
 - name: Read GTID positions
   shell:
-    cmd: grep -oP '\d+-\d+-\d+' /var/backups/mysql/tmp/xtrabackup_binlog_info
+    cmd: grep -oP '\d+-\d+-\d+' {{ mysql_backup_location }}/tmp/xtrabackup_binlog_info
   register: master_gtid
   ignore_errors: yes
   changed_when: false
@@ -105,11 +115,11 @@
 - name: Prepare and restore backup
   ansible.builtin.shell: "{{item}}"
   loop:
-    - mariabackup --prepare --target-dir=/var/backups/mysql/tmp/
+    - mariabackup --prepare --target-dir={{ mysql_backup_location }}/tmp/
     - rm -rf /var/lib/mysql/*
-    - mariabackup --move-back --target-dir=/var/backups/mysql/tmp/
+    - mariabackup --move-back --target-dir={{ mysql_backup_location }}/tmp/
     - chown -R mysql:mysql /var/lib/mysql/
-    - rm -rf /var/backups/mysql/tmp/
+    - rm -rf {{ mysql_backup_location }}/tmp/
   when: replica_state.Is_Slave == false
 
 - name: Start Mysql Service
@@ -126,18 +136,8 @@
       - START SLAVE;
   when: replica_state.Is_Slave == false
 
-# - name: Find actual backups in /var/backups/mysql
-#   find:
-#     paths: 
-#       - /var/backups/mysql/
-#     file_type: directory
-#     recurse: no
-#   register: backups
-#   when: replica_state.Is_Slave == false
-
-# - name: Get master binlog file name and binlog position
-#   community.mysql.mysql_replication:
-#     mode: getmaster
-#   register: master_pos
-#   delegate_to: "{{ groups['dbservers'] | first }}"
-#   when: replica_state.Is_Slave == false
+- name: Copy backup script
+  template:
+    src: mysql_backup.sh.j2
+    dest: /usr/local/bin/mysql_backup.sh
+    mode: '+x'
