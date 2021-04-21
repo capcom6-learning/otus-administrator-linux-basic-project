@@ -1,27 +1,11 @@
 ---
 
-# - name: Download backup scripts
-#   get_url:
-#     url: "{{ item }}"
-#     dest: /usr/local/bin/
-#     mode: '0755'
-#   loop:
-#     - https://raw.githubusercontent.com/capcom6/mariabackup/master/backup-mysql.sh
-#     - https://raw.githubusercontent.com/capcom6/mariabackup/master/prepare-mysql.sh
-#     - https://raw.githubusercontent.com/capcom6/mariabackup/master/extract-mysql.sh
-
 - name: Add the user 'backup'
   ansible.builtin.user:
     name: backup
-    groups: mysql
+    groups: backup,mysql
     comment: Backup user
     home: '{{ backup_user_home }}'
-
-# - name: Update permissions for data dir
-#   ansible.builtin.shell: "{{item}}"
-#   loop:
-#     - 'find /var/lib/mysql -type d -exec chmod g+rx {} +'
-#     - 'chmod g+r -R /var/lib/mysql'
 
 - name: Create a directory for backups
   ansible.builtin.file:
@@ -29,22 +13,15 @@
     state: directory
     mode: '0755'
     owner: backup
-    group: mysql
+    group: backup
 
 - name: Create a directory for backups
   ansible.builtin.file:
     path: '{{ mysql_backup_location }}'
     state: directory
-    mode: '0755'
+    mode: '0775'
     owner: backup
     group: mysql
-
-# - name: Create a directory for backup configs
-#   ansible.builtin.file:
-#     path: /etc/mysql
-#     state: directory
-#     owner: backup
-#     group: backup
 
 - name: Create Mysql backup configuration file
   template: 
@@ -59,81 +36,8 @@
     mode: getreplica
   register: replica_state
 
-# - name: Make new backup
-#   ansible.builtin.shell: systemd-cat --identifier=backup-mysql /usr/local/bin/backup-mysql.sh
-  # become: yes
-  # become_user: backup
-  # register: backup_state
-  # delegate_to: "{{ groups['dbservers'] | first }}"
-  # when: replica_state.Is_Slave == false
-
-- name: Create temporary backup directory
-  ansible.builtin.tempfile:
-    state: directory
-    suffix: backup
-  register: backup_path
-  delegate_to: "{{ groups['dbservers'] | first }}"
-  when: replica_state.Is_Slave == false
-
-- name: Create temporary backup directory
-  ansible.builtin.tempfile:
-    state: directory
-    suffix: backup
-  register: local_path
-  delegate_to: 127.0.0.1
-  when: replica_state.Is_Slave == false
-
-- name: Make new backup
-  ansible.builtin.shell: 'mariabackup --backup --target-dir={{backup_path.path}}'
-  delegate_to: "{{ groups['dbservers'] | first }}"
-  when: replica_state.Is_Slave == false
-
-- name: Download backup to controller
-  ansible.builtin.shell: "scp -r 'root@{{ groups['dbservers'] | first }}:{{backup_path.path}}' {{local_path.path}}"
-  delegate_to: 127.0.0.1
-  when: replica_state.Is_Slave == false
-
-- name: Upload backup to {{ inventory_hostname }}
-  ansible.builtin.shell: "rsync -r {{local_path.path}}/{{backup_path.path | basename}}/* root@{{inventory_hostname}}:{{ mysql_backup_location }}/tmp/"
-  delegate_to: 127.0.0.1
-  when: replica_state.Is_Slave == false
-
-- name: Stop Mysql Service
-  service: 
-    name: mariadb
-    state: stopped
-  when: replica_state.Is_Slave == false
-
-- name: Read GTID positions
-  shell:
-    cmd: grep -oP '\d+-\d+-\d+' {{ mysql_backup_location }}/tmp/xtrabackup_binlog_info
-  register: master_gtid
-  ignore_errors: yes
-  changed_when: false
-  when: replica_state.Is_Slave == false
-
-- name: Prepare and restore backup
-  ansible.builtin.shell: "{{item}}"
-  loop:
-    - mariabackup --prepare --target-dir={{ mysql_backup_location }}/tmp/
-    - rm -rf /var/lib/mysql/*
-    - mariabackup --move-back --target-dir={{ mysql_backup_location }}/tmp/
-    - chown -R mysql:mysql /var/lib/mysql/
-    - rm -rf {{ mysql_backup_location }}/tmp/
-  when: replica_state.Is_Slave == false
-
-- name: Start Mysql Service
-  service: 
-    name: mariadb
-    state: started
-  when: replica_state.Is_Slave == false
-
-- name: Setup replication
-  community.mysql.mysql_query:
-    query:
-      - SET GLOBAL gtid_slave_pos = "{{ master_gtid.stdout }}";
-      - CHANGE MASTER TO MASTER_HOST="{{ hostvars[groups['dbservers'] | first].ansible_all_ipv4_addresses | ansible.netcommon.ipaddr(network) | first }}", MASTER_PORT=3306, MASTER_USER="{{ mysql_slave_user }}", MASTER_PASSWORD="{{ mysql_slave_password }}", MASTER_USE_GTID=slave_pos;
-      - START SLAVE;
+- name: Include a play after another play
+  include_tasks: init_replication.yml
   when: replica_state.Is_Slave == false
 
 - name: Copy backup script
@@ -141,3 +45,13 @@
     src: mysql_backup.sh.j2
     dest: /usr/local/bin/mysql_backup.sh
     mode: '+x'
+
+- name: Add cron backup job
+  ansible.builtin.cron:
+    name: MySQL Backup
+    cron_file: mysql_backup
+    user: backup
+    job: /usr/local/bin/mysql_backup.sh
+    state: present
+    hour: 1
+    minute: 23

@@ -37,16 +37,25 @@
   notify:
   - restart mariadb
 
+- name: Copy MySQL umask.conf
+  ansible.builtin.copy:
+    src: umask.conf
+    dest: /etc/systemd/system/mariadb.service.d/umask.conf
+  notify:
+  - restart mariadb
+
+- name: Setup MySQL Data permissions
+  ansible.builtin.file:
+    path: /var/lib/mysql
+    state: directory
+    recurse: yes
+    mode: 'g+rX'
+
 - name: Start Mysql Service
   service: 
     name: mariadb
     state: started 
     enabled: yes
-
-# - name: Check is root password configured
-#   stat:
-#     path: /root/.my.cnf
-#   register: mysql_root_configured
 
 # mysql_secure_installation
 - name: root password is present

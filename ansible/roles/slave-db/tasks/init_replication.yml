@@ -1,0 +1,71 @@
+---
+
+- name: Create temporary backup directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: backup
+  register: backup_path
+  delegate_to: "{{ groups['dbservers'] | first }}"
+  when: replica_state.Is_Slave == false
+
+- name: Create temporary backup directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: backup
+  register: local_path
+  delegate_to: 127.0.0.1
+  when: replica_state.Is_Slave == false
+
+- name: Make new backup
+  ansible.builtin.shell: 'mariabackup --backup --target-dir={{backup_path.path}}'
+  delegate_to: "{{ groups['dbservers'] | first }}"
+  when: replica_state.Is_Slave == false
+
+- name: Download backup to controller
+  ansible.builtin.shell: "scp -r 'root@{{ groups['dbservers'] | first }}:{{backup_path.path}}' {{local_path.path}}"
+  delegate_to: 127.0.0.1
+  when: replica_state.Is_Slave == false
+
+- name: Upload backup to {{ inventory_hostname }}
+  ansible.builtin.shell: "rsync -r {{local_path.path}}/{{backup_path.path | basename}}/* root@{{inventory_hostname}}:{{ mysql_backup_location }}/tmp/"
+  delegate_to: 127.0.0.1
+  when: replica_state.Is_Slave == false
+
+- name: Stop Mysql Service
+  service: 
+    name: mariadb
+    state: stopped
+  when: replica_state.Is_Slave == false
+
+- name: Read GTID positions
+  shell:
+    cmd: grep -oP '\d+-\d+-\d+' {{ mysql_backup_location }}/tmp/xtrabackup_binlog_info
+  register: master_gtid
+  ignore_errors: yes
+  changed_when: false
+  when: replica_state.Is_Slave == false
+
+- name: Prepare and restore backup
+  ansible.builtin.shell: "{{item}}"
+  loop:
+    - mariabackup --prepare --target-dir={{ mysql_backup_location }}/tmp/
+    - rm -rf /var/lib/mysql/*
+    - mariabackup --move-back --target-dir={{ mysql_backup_location }}/tmp/
+    - chown -R mysql:mysql /var/lib/mysql/
+    - chmod -R g+rX /var/lib/mysql/
+    - rm -rf {{ mysql_backup_location }}/tmp/
+  when: replica_state.Is_Slave == false
+
+- name: Start Mysql Service
+  service: 
+    name: mariadb
+    state: started
+  when: replica_state.Is_Slave == false
+
+- name: Setup replication
+  community.mysql.mysql_query:
+    query:
+      - SET GLOBAL gtid_slave_pos = "{{ master_gtid.stdout }}";
+      - CHANGE MASTER TO MASTER_HOST="{{ hostvars[groups['dbservers'] | first].ansible_all_ipv4_addresses | ansible.netcommon.ipaddr(network) | first }}", MASTER_PORT=3306, MASTER_USER="{{ mysql_slave_user }}", MASTER_PASSWORD="{{ mysql_slave_password }}", MASTER_USE_GTID=slave_pos;
+      - START SLAVE;
+  when: replica_state.Is_Slave == false

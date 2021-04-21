@@ -1,3 +1,5 @@
+
+
 - name: Create Application Database
   community.mysql.mysql_db:
     name: '{{ mysql_app_database }}'
