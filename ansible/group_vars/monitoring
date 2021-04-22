@@ -1,0 +1,5 @@
+---
+# Variables for the Monitoring configuration
+
+prometheus_version: 2.25.2
+grafana_version: 7.4.5-1

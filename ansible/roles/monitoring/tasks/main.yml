@@ -1,0 +1,69 @@
+---
+
+- name: Create prometheus user
+  ansible.builtin.user:
+    name: prometheus
+    create_home: no
+    shell: /bin/false
+
+# - name: Remove Prometheus binary
+#   ansible.builtin.file:
+#     path: /usr/local/bin/prometheus
+#     state: absent
+
+- name: Check for Prometheus binary
+  ansible.builtin.stat:
+    path: /usr/local/bin/prometheus
+  register: prometheus_status
+
+- name: Copy installation script
+  ansible.builtin.template:
+    src: setup.sh.j2
+    dest: /tmp/setup.sh
+    mode: '+x'
+  when: prometheus_status.stat.exists == False
+  
+- name: Setup Prometheus
+  ansible.builtin.shell: 
+    cmd: /tmp/setup.sh
+    chdir: /tmp
+  when: prometheus_status.stat.exists == False
+
+- name: Setup service
+  ansible.builtin.copy:
+    src: prometheus.service
+    dest: /etc/systemd/system/prometheus.service
+  notify: Reload systemctl
+  when: prometheus_status.stat.exists == False
+
+- name: Copy Prometheus config
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+  notify: Restart Prometheus
+
+- name: Start prometheus
+  ansible.builtin.service:
+    name: prometheus
+    state: started
+    enabled: yes
+
+- name: Install Grafana
+  ansible.builtin.yum:
+    name: 'https://dl.grafana.com/oss/release/grafana-{{ grafana_version }}.x86_64.rpm'
+    state: present
+
+- name: Start Grafana
+  ansible.builtin.service:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+- name: Allow remote access to Grafana at {{ inventory_hostname }}
+  ansible.posix.firewalld:
+    port: 3000/tcp
+    permanent: yes
+    state: enabled
+  notify: reload firewalld

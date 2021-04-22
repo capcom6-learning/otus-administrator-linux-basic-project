@@ -16,5 +16,6 @@
 #frontend
 139.177.180.121
 
-#[monitoring]
+[monitoring]
 #monitoring
+172.105.90.62

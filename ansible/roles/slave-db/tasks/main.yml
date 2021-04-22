@@ -53,5 +53,5 @@
     user: backup
     job: /usr/local/bin/mysql_backup.sh
     state: present
-    hour: 1
-    minute: 23
+    hour: '1'
+    minute: '23'

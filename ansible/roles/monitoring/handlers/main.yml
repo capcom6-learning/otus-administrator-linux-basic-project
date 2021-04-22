@@ -1,0 +1,14 @@
+---
+
+- name: Restart Prometheus
+  ansible.builtin.service:
+    name: prometheus
+    state: restarted
+
+- name: Reload systemctl
+  ansible.builtin.shell: systemctl daemon-reload
+
+- name: reload firewalld
+  service: 
+   name: firewalld
+   state: reloaded

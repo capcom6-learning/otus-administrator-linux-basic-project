@@ -1,0 +1,21 @@
+#!/bin/bash
+
+cd /tmp
+# Скачаем архив с prometheus
+curl -LO https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz
+# Распакуем в текущую директорию
+tar xzvf prometheus-{{ prometheus_version }}.linux-amd64.tar.gz
+# Копируем исполняемые файлы в общесистемные локации
+sudo cp prometheus-{{ prometheus_version }}.linux-amd64/prometheus prometheus-{{ prometheus_version }}.linux-amd64/promtool /usr/local/bin/
+# Создаем каталог для конфигурационных файлов и копируем в него файлы из комплекта поставки
+sudo mkdir /etc/prometheus
+sudo cp -r prometheus-{{ prometheus_version }}.linux-amd64/consoles/ /etc/prometheus/consoles
+sudo cp -r prometheus-{{ prometheus_version }}.linux-amd64/console_libraries/ /etc/prometheus/console_libraries
+sudo cp prometheus-{{ prometheus_version }}.linux-amd64/prometheus.yml /etc/prometheus/
+# Меняем владельца конфигурационных файлов
+sudo chown -R prometheus:prometheus /etc/prometheus
+# Создаем каталог для хранения базы данных
+sudo mkdir /var/lib/prometheus
+sudo chown prometheus:prometheus /var/lib/prometheus
+
+rm -rf ./prometheus-{{ prometheus_version }}.linux-amd64

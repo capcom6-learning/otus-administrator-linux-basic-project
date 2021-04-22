@@ -6,6 +6,7 @@
 
   roles:
   - common
+  - monitoring-node
 
 # Configure and deploy database servers.
 - hosts: dbservers
@@ -55,10 +56,10 @@
   - lb
 
 # Configure and deploy the Prometheus monitoring node(s).
-# - hosts: monitoring
+- hosts: monitoring
 
-#   roles:
-#   - prometheus
+  roles:
+  - monitoring
 
-#   tags:
-#   - monitoring
+  tags:
+  - monitoring

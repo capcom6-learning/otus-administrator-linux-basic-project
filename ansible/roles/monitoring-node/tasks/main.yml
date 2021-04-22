@@ -1,0 +1,43 @@
+---
+
+- name: Create prometheus-exporter user
+  ansible.builtin.user:
+    name: prometheus-exporter
+    create_home: no
+    shell: /bin/false
+
+# - name: Remove Node Exporter
+#   ansible.builtin.file:
+#     path: /usr/local/bin/node_exporter
+#     state: absent
+
+- name: Check for Node Exporter binary
+  ansible.builtin.stat:
+    path: /usr/local/bin/node_exporter
+  register: node_exporter_status
+
+- name: Copy installation script
+  ansible.builtin.template:
+    src: setup.sh.j2
+    dest: /tmp/setup.sh
+    mode: '+x'
+  when: node_exporter_status.stat.exists == False
+  
+- name: Install Node Exporter
+  ansible.builtin.shell: 
+    cmd: /tmp/setup.sh
+    chdir: /tmp
+  when: node_exporter_status.stat.exists == False
+
+- name: Setup service
+  ansible.builtin.copy:
+    src: node_exporter.service
+    dest: /etc/systemd/system/node_exporter.service
+  notify: Reload systemctl
+  when: node_exporter_status.stat.exists == False
+
+- name: Start Node Exporter
+  ansible.builtin.service:
+    name: node_exporter
+    state: started
+    enabled: yes

@@ -2,3 +2,5 @@
 # Variables here are applicable to all host groups
 
 network: 192.168.128.0/17
+
+node_exporter_version: 1.1.2

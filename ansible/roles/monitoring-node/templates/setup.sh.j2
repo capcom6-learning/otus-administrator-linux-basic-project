@@ -1,0 +1,11 @@
+#!/bin/bash
+
+cd /tmp
+# Скачаем архив с node exporter
+curl -LO https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+# Распакуем в текущую директорию
+tar xzvf node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+# Копируем исполняемый файл в общесистемный каталог
+cp node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter /usr/local/bin/
+
+rm -rf node_exporter-{{ node_exporter_version }}.linux-amd64

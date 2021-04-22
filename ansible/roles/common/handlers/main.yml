@@ -5,3 +5,6 @@
   service: 
    name: firewalld
    state: reloaded
+
+- name: Reload systemctl
+  ansible.builtin.shell: systemctl daemon-reload
