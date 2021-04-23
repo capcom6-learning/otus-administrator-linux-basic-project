@@ -1,4 +1,5 @@
 ---
+# This role setups Node Exporter for Prometheus
 
 - name: Create prometheus-exporter user
   ansible.builtin.user:
@@ -29,7 +30,7 @@
     chdir: /tmp
   when: node_exporter_status.stat.exists == False
 
-- name: Setup service
+- name: Setup Node Exporter service
   ansible.builtin.copy:
     src: node_exporter.service
     dest: /etc/systemd/system/node_exporter.service

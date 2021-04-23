@@ -1,4 +1,5 @@
 ---
+# This role clone application git repository in web root
 
 # - name: Remove old app
 #   ansible.builtin.shell: rm -rf /var/www/html

@@ -17,7 +17,7 @@
     persistent: yes
   when: sestatus.rc != 0
 
-- name: Configure the httpd conf
+- name: Copy httpd conf
   template: 
    src: httpd.conf.j2
    dest: /etc/httpd/conf/httpd.conf

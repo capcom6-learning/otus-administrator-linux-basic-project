@@ -1,4 +1,5 @@
-
+---
+# This role setups application database
 
 - name: Create Application Database
   community.mysql.mysql_db:

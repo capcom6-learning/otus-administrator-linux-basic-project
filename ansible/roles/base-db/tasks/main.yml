@@ -1,9 +1,6 @@
 ---
 # This role will install MySQL and create db user and give permissions.
 
-# - name: Install MariaDB Repo
-#   ansible.builtin.shell: curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="{{ mariadb_version }}"
-
 - name: Import a key from a url
   ansible.builtin.rpm_key:
     state: present
@@ -14,7 +11,7 @@
     src: mariadb.repo.j2
     dest: /etc/yum.repos.d/mariadb.repo
 
-- name: Install Mysql package
+- name: Install MariaDB packages and Python bindings
   yum:
     name:
       - MariaDB-server 
@@ -30,35 +27,35 @@
     persistent: yes
   when: sestatus.rc != 0
 
-- name: Create Mysql configuration file
+- name: Create MariaDB server configuration file
   template: 
     src: my.cnf.j2
     dest: /etc/my.cnf.d/server.cnf
   notify:
   - restart mariadb
 
-- name: Copy MySQL umask.conf
+- name: Copy MariaDB umask.conf
   ansible.builtin.copy:
     src: umask.conf
     dest: /etc/systemd/system/mariadb.service.d/umask.conf
   notify:
   - restart mariadb
 
-- name: Setup MySQL Data permissions
+- name: Setup MariaDB Data permissions
   ansible.builtin.file:
     path: /var/lib/mysql
     state: directory
     recurse: yes
     mode: 'g+rX'
 
-- name: Start Mysql Service
+- name: Start MariaDB Service
   service: 
     name: mariadb
     state: started 
     enabled: yes
 
 # mysql_secure_installation
-- name: root password is present
+- name: Set MariaDB root password
   mysql_user:
     name: 'root'
     host_all: true
@@ -66,24 +63,24 @@
     state: present
   # when: not mysql_root_configured
 
-- name: Create Mysql configuration file
+- name: Create MariaDB client config for root user
   template: 
     src: my_root.cnf.j2
     dest: /root/.my.cnf
     mode: '0600'
 
-- name: test database is absent
+- name: Remove test database from MariaDB
   mysql_db:
     name: test
     state: absent
 
-- name: anonymous users are absent
+- name: Remove anonymous users from MariaDB
   mysql_user:
     name: ''
     state: absent
     host_all: true
 
-- name: remove remote root
+- name: Remove remote root login from MariaDB
   community.mysql.mysql_query:
     query:
       - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')

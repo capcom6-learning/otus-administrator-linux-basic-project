@@ -2,7 +2,7 @@
 
 NOW=$(date +"%Y-%m-%d")
 
-find {{ mysql_backup_location }} -maxdepth 1 -ctime +7 -type d -exec rm -rf {} \; \
+find {{ mysql_backup_location }} -maxdepth 1 -ctime +{{ mysql_backup_expire }} -type d -exec rm -rf {} \; \
     && mkdir -p {{ mysql_backup_location }}/${NOW} \
     && mariabackup --backup --target-dir={{mysql_backup_location}}/${NOW} \
     && mariabackup --prepare --target-dir={{mysql_backup_location}}/${NOW}

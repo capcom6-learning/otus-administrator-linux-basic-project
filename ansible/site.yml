@@ -13,7 +13,7 @@
 
   roles:
   - base-db
-  - master-db
+  - web-db
 
   tags:
   - db
@@ -31,9 +31,7 @@
   tags:
   - db
 
-# Configure and deploy the web servers. Note that we include two roles here,
-# the 'base-apache' role which simply sets up Apache, and 'web' which includes
-# our example web application.
+# Configure and deploy the web servers.
 - hosts: webservers
 
   roles:

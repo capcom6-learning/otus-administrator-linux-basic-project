@@ -1,4 +1,5 @@
 ---
+# This role installs Prometheus and Grafana
 
 - name: Create prometheus user
   ansible.builtin.user:

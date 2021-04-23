@@ -1,4 +1,5 @@
 ---
+# This role setups replication and schedule backups
 
 - name: Add the user 'backup'
   ansible.builtin.user:

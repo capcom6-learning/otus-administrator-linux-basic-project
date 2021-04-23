@@ -15,7 +15,6 @@
 [mysqld]
 # set server_id
 server-id		        = {{ server_id }}
-# report_host		    = {{ ansible_hostname }}
 # optimize memory usage
 {% if 'dbservers' in group_names %}
 innodb_buffer_pool_size	= {{ (ansible_memtotal_mb * 0.8) | int }}M
@@ -24,9 +23,13 @@ innodb_buffer_pool_size	= {{ (ansible_memtotal_mb * 0.5) | int }}M
 read_only               = 1
 {% endif %}
 
+# set binlog filename prefix
 log_bin                 = mysql-bin
+# set binlog format
 binlog_format           = mixed
+# set binlog expire days
 expire_logs_days        = {{ mysql_binlog_expire }}
+# set compression for binlog
 log_bin_compress        = ON
 
 #

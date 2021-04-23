@@ -1,6 +1,6 @@
 ---
 
-- name: Create temporary backup directory
+- name: Create remote temporary backup directory
   ansible.builtin.tempfile:
     state: directory
     suffix: backup
@@ -8,7 +8,7 @@
   delegate_to: "{{ groups['dbservers'] | first }}"
   when: replica_state.Is_Slave == false
 
-- name: Create temporary backup directory
+- name: Create local temporary backup directory
   ansible.builtin.tempfile:
     state: directory
     suffix: backup
@@ -31,7 +31,7 @@
   delegate_to: 127.0.0.1
   when: replica_state.Is_Slave == false
 
-- name: Stop Mysql Service
+- name: Stop MariaDB Service
   service: 
     name: mariadb
     state: stopped
@@ -56,13 +56,13 @@
     - rm -rf {{ mysql_backup_location }}/tmp/
   when: replica_state.Is_Slave == false
 
-- name: Start Mysql Service
+- name: Start MariaDB Service
   service: 
     name: mariadb
     state: started
   when: replica_state.Is_Slave == false
 
-- name: Setup replication
+- name: Start replication
   community.mysql.mysql_query:
     query:
       - SET GLOBAL gtid_slave_pos = "{{ master_gtid.stdout }}";
