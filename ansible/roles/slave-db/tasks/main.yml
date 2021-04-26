@@ -1,6 +1,11 @@
 ---
 # This role setups replication and schedule backups
 
+- name: Ensure group "backup" exists
+  ansible.builtin.group:
+    name: backup
+    state: present
+
 - name: Add the user 'backup'
   ansible.builtin.user:
     name: backup

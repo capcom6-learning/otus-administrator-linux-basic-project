@@ -1,0 +1,26 @@
+---
+
+- name: Get master binlog file name and binlog position
+  community.mysql.mysql_replication:
+    mode: getreplica
+  register: replica_state
+
+- name: Stop MySQL replica thread
+  community.mysql.mysql_replication:
+    mode: stopreplica
+  when: replica_state.Is_Slave == true
+
+- name: Reset all slaves
+  community.mysql.mysql_replication:
+    mode: resetreplicaall
+  when: replica_state.Is_Slave == true
+
+- name: Remove cron backup job
+  ansible.builtin.cron:
+    name: MySQL Backup
+    cron_file: mysql_backup
+    user: backup
+    job: /usr/local/bin/mysql_backup.sh
+    state: absent
+    hour: '1'
+    minute: '23'

@@ -13,6 +13,7 @@
 
   roles:
   - base-db
+  - master-db
   - web-db
 
   tags:

@@ -6,11 +6,11 @@
 
 [dbservers]
 #mysql_master
-139.177.180.9 server_id=1
+172.104.150.90 server_id=2
 
 [dbslaves]
 #mysql_slave
-172.104.150.90 server_id=2
+172.104.248.238 server_id=3
 
 [lbservers]
 #frontend
