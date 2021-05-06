@@ -224,6 +224,7 @@ find {{ mysql_backup_location }} -maxdepth 1 -ctime +{{ mysql_backup_expire }} -
 
 ```conf
     upstream backend {
+        ip_hash;
     {% for host in groups.webservers %}
         server {{ hostvars[host].ansible_all_ipv4_addresses | ansible.netcommon.ipaddr(network) | first }}:80;
     {% endfor %}
