@@ -28,3 +28,8 @@
   command: getenforce
   register: sestatus
   changed_when: false
+
+- name: Make hosts
+  ansible.builtin.template:
+    src: hosts.j2
+    dest: /etc/hosts
