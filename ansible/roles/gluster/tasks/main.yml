@@ -59,6 +59,7 @@
       cluster.quorum-count: 1,
       performance.quick-read: 'on'
     }
+    force: true
   run_once: true
 
 # - name: Check volume existance
