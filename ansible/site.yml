@@ -45,6 +45,18 @@
   tags:
   - web
 
+# Configure and deploy the gluster cluster.
+- hosts: gluster
+
+  roles:
+  - gluster
+
+  vars_files:
+  - group_vars/webservers
+
+  tags:
+  - gluster
+
 # Configure and deploy the load balancer(s).
 - hosts: lbservers
 

@@ -11,6 +11,13 @@
     owner: apache
     group: apache
 
+- name: Create userdata
+  ansible.builtin.file:
+    path: "{{ webapp_userdata }}"
+    state: directory
+    owner: apache
+    group: apache
+
 - name: Copy the code from repository
   git: 
     repo: '{{ repository }}'

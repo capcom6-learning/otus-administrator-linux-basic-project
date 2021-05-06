@@ -1,0 +1,4 @@
+# Variables for gluster cluster
+
+# server location for shared data
+gluster_userdata: /data/userdata

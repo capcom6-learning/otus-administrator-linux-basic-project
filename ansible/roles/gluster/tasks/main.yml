@@ -1,0 +1,107 @@
+---
+
+- name: Install yum-utils and yum-priorities
+  yum:
+   name:
+    - yum-priorities 
+    - yum-utils
+   state: present
+
+- name: Install centos-release-gluster
+  yum:
+   name: centos-release-gluster
+   state: present
+
+- name: Install glusterfs-server
+  yum:
+   name: glusterfs-server
+   state: present
+
+- name: Start glusterd service
+  ansible.builtin.service:
+    name: glusterd
+    state: started
+    enabled: yes
+
+# - name: Probe peers
+#   ansible.builtin.shell:
+#     cmd: 'gluster peer probe {{ item }}'
+#   run_once: true
+#   loop: "{{ groups.gluster | map('extract', hostvars, 'ansible_hostname') | list }}"
+
+- name: Create a trusted storage pool
+  gluster.gluster.gluster_peer:
+    state: present
+    nodes: "{{ groups.gluster | map('extract', hostvars, 'ansible_hostname') | list }}"
+  run_once: true
+
+- name: Create data directory
+  ansible.builtin.file:
+    path: "{{ gluster_userdata }}"
+    state: directory
+
+- name: Create mount directory
+  ansible.builtin.file:
+    path: "{{ webapp_userdata }}"
+    state: directory
+  when: "webapp_userdata is defined"
+
+- name: Create gluster volume
+  gluster.gluster.gluster_volume:
+    state: started
+    name: userdata
+    bricks: "{{ gluster_userdata }}"
+    replicas: "{{ groups.gluster | length }}"
+    cluster: "{{ groups.gluster | map('extract', hostvars, 'ansible_hostname') | list }}"
+    options: {
+      network.ping-timeout: 5,
+      cluster.quorum-type: 'fixed',
+      cluster.quorum-count: 1,
+      performance.quick-read: 'on'
+    }
+  run_once: true
+
+# - name: Check volume existance
+#   ansible.builtin.shell: gluster volume status userdata
+#   register: volume_status
+#   run_once: true
+#   failed_when: volume_status.rc > 1
+
+# - name: Setup volume
+#   ansible.builtin.shell:
+#     cmd: "gluster volume create userdata replica {{ groups.gluster | length }} {{ groups.gluster | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '$', ':/srv/userdata') | list | join(' ') }} force"
+#   when: volume_status.rc != 0
+#   run_once: true
+
+# - name: Start volume
+#   ansible.builtin.shell:
+#     cmd: gluster volume start userdata
+#   when: volume_status.rc != 0
+#   run_once: true
+
+# - name: Setup options
+#   ansible.builtin.shell:
+#     cmd: "gluster volume set userdata {{ item }}"
+#   loop:
+#     - network.ping-timeout 5
+#     - cluster.quorum-type fixed
+#     - cluster.quorum-count 1
+#     - performance.quick-read on
+#   when: volume_status.rc != 0
+#   run_once: true
+
+- name: Mount Gluster Volume
+  ansible.posix.mount:
+    path: "{{ webapp_userdata }}"
+    src: "{{ hostvars[inventory_hostname].ansible_hostname }}:userdata"
+    fstype: glusterfs
+    state: mounted
+  when: "webapp_userdata is defined"
+
+- name: Chown mount directory
+  ansible.builtin.file:
+    path: "{{ webapp_userdata }}"
+    state: directory
+    owner: apache
+    group: apache
+  when: "webapp_userdata is defined"

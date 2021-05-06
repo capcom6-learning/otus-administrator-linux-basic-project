@@ -4,6 +4,12 @@
 #backend2
 192.46.237.252
 
+[gluster]
+#backend1
+139.177.179.76
+#backend2
+192.46.237.252
+
 [dbservers]
 #mysql_master
 172.104.150.90 server_id=2

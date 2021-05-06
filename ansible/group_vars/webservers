@@ -6,3 +6,6 @@ repository: https://github.com/bcit-ci/CodeIgniter.git
 
 # this is the version of sample app
 webapp_version: 3.1.11
+
+# mount point for shared data
+webapp_userdata: /var/www/html/userdata
