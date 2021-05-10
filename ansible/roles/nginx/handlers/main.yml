@@ -7,3 +7,7 @@
 - name: reload nginx
   service: name=nginx state=reloaded
 
+- name: reload firewalld
+  service: 
+   name: firewalld
+   state: reloaded

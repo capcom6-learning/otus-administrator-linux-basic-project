@@ -11,24 +11,25 @@
     owner: apache
     group: apache
 
-- name: Create userdata
-  ansible.builtin.file:
-    path: "{{ webapp_userdata }}"
-    state: directory
-    owner: apache
-    group: apache
-
 - name: Copy the code from repository
   git: 
     repo: '{{ repository }}'
     version: '{{ webapp_version }}'
     dest: '/var/www/html/'
     update: no
+    force: yes
 
 - name: Setup database connection
   template:
     src: database.php.j2
     dest: /var/www/html/application/config/database.php
+
+- name: Create userdata
+  ansible.builtin.file:
+    path: "{{ webapp_userdata }}"
+    state: directory
+    owner: apache
+    group: apache
 
 - name: Recursively change ownership of a directory
   ansible.builtin.file:

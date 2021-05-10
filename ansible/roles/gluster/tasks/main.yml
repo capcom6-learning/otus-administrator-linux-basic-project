@@ -48,15 +48,15 @@
 
 - name: Create gluster volume
   gluster.gluster.gluster_volume:
-    state: started
+    state: present
     name: userdata
     bricks: "{{ gluster_userdata }}"
     replicas: "{{ groups.gluster | length }}"
     cluster: "{{ groups.gluster | map('extract', hostvars, 'ansible_hostname') | list }}"
     options: {
-      network.ping-timeout: 5,
+      network.ping-timeout: '5',
       cluster.quorum-type: 'fixed',
-      cluster.quorum-count: 1,
+      cluster.quorum-count: '1',
       performance.quick-read: 'on'
     }
     force: true

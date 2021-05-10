@@ -1,27 +1,27 @@
 [webservers]
 #backend1
-139.177.179.76
+172.104.237.96
 #backend2
-192.46.237.252
+139.162.175.254
 
 [gluster]
 #backend1
-139.177.179.76
+172.104.237.96
 #backend2
-192.46.237.252
+139.162.175.254
 
 [dbservers]
 #mysql_master
-172.104.150.90 server_id=2
+172.104.230.131 server_id=1
 
 [dbslaves]
 #mysql_slave
-172.104.248.238 server_id=3
+172.105.66.44 server_id=2
 
 [lbservers]
 #frontend
-139.177.180.121
+172.104.240.138
 
 [monitoring]
 #monitoring
-172.105.90.62
+192.46.232.163
